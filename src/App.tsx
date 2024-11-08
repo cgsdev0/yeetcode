@@ -5,6 +5,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import * as acorn from "acorn";
 import { minify } from "terser";
 import { generate } from "astring";
+import Markdown from "react-markdown";
 
 import Editor from "@monaco-editor/react";
 import { WorkerContext } from "./worker_context.ts";
@@ -64,6 +65,7 @@ function App() {
   const [pending, setPending] = useState(false);
   const [barebones, setBarebones] = useState(false);
   const [ohgod, setOhgod] = useState(false);
+  const [done, setDone] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [lines, setLines] = useState<string[]>([]);
   const [key, setKey] = useState("0");
@@ -75,55 +77,72 @@ function App() {
 
   const wsRef = useRef<WebSocket | null>(null);
 
+  const [needsAuth, setNeedsAuth] = useState(false);
   useEffect(() => {
-    let shouldConnect = true;
+    (async function () {
+      let shouldConnect = true;
 
-    let conjunctionJunction = () => {
-      if (!shouldConnect) {
-        return null;
-      }
-
-      const innerWs = new WebSocket(
+      const data = await window.fetch(
         `${
-          window.location.protocol.endsWith("s:") ? "wss" : "ws"
-        }://${rewriteHostname()}/ws`,
+          window.location.protocol.endsWith("s:") ? "https" : "http"
+        }://${rewriteHostname()}/`,
+        { mode: "cors", credentials: "include" },
       );
-
-      innerWs.onopen = () => {
-        console.log("ws open");
-      };
-
-      innerWs.onmessage = (e: any) => {
-        console.log("ws message");
-        try {
-          const data = JSON.parse(e.data);
-          console.warn(data);
-          if (data.type === "world") {
-            dispatch(update(data));
-          }
-        } catch (e) {
-          console.error(e);
+      const parsed = await data.json();
+      if (!parsed.hasOwnProperty("passport")) {
+        setNeedsAuth(true);
+        return;
+      }
+      let conjunctionJunction = () => {
+        if (!shouldConnect) {
+          return null;
         }
-      };
 
-      innerWs.onclose = () => {
-        console.log(`on close - ${!shouldConnect ? "not " : " "}reconnecting`);
-        setTimeout(() => {
-          if (shouldConnect) {
-            wsRef.current = conjunctionJunction();
+        const innerWs = new WebSocket(
+          `${
+            window.location.protocol.endsWith("s:") ? "wss" : "ws"
+          }://${rewriteHostname()}/ws`,
+        );
+
+        innerWs.onopen = () => {
+          console.log("ws open");
+        };
+
+        innerWs.onmessage = (e: any) => {
+          console.log("ws message");
+          try {
+            const data = JSON.parse(e.data);
+            console.warn(data);
+            if (data.type === "world") {
+              dispatch(update(data));
+            }
+          } catch (e) {
+            console.error(e);
           }
-        }, 1000);
+        };
+
+        innerWs.onclose = () => {
+          console.log(
+            `on close - ${!shouldConnect ? "not " : " "}reconnecting`,
+          );
+          setTimeout(() => {
+            if (shouldConnect) {
+              wsRef.current = conjunctionJunction();
+            }
+          }, 1000);
+        };
+
+        return innerWs;
       };
 
-      return innerWs;
-    };
+      wsRef.current = conjunctionJunction();
 
-    wsRef.current = conjunctionJunction();
-
-    return () => {
-      shouldConnect = false;
-      wsRef.current?.close();
-    };
+      return () => {
+        shouldConnect = false;
+        console.log("Tearing down");
+        wsRef.current?.close();
+      };
+    })();
   }, []);
 
   const cancel = () => {
@@ -202,6 +221,11 @@ function App() {
 
       if (e.data.done) {
         setResults(e.data.results);
+        if (e.data.results[e.data.results.length - 1].correct) {
+          console.warn("sending done");
+          wsRef.current?.send("done");
+          setDone(true);
+        }
       }
     };
     worker.addEventListener("message", listen);
@@ -309,6 +333,11 @@ function App() {
     localStorage.removeItem(`code-key-${problem.proto.name}`);
     setValue(getProto(problem.proto));
   }, [value]);
+  const signin = () => {
+    window.location.href = `${
+      window.location.protocol.endsWith("s:") ? "https" : "http"
+    }://${rewriteHostname()}/auth/twitch`;
+  };
   const onSubmit = useCallback(() => {
     worker.postMessage({
       type: "EXEC_CODE",
@@ -319,6 +348,26 @@ function App() {
   }, [value]);
 
   const pc = useAppSelector((state) => state.server.players.length);
+  if (needsAuth) {
+    return (
+      <div
+        style={{
+          height: "100dvh",
+          overflow: "hidden",
+          flexDirection: "column",
+          gap: 32,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <h1>yeetcode</h1>
+        <button className="twitch" onClick={signin}>
+          Signin with Twitch
+        </button>
+      </div>
+    );
+  }
   if (!pc)
     return (
       <div
@@ -343,34 +392,24 @@ function App() {
           id="left"
           style={{ height: "100dvh", borderRight: "1px solid #555" }}
         >
-          <div className="problem" style={{ width: "100%", height: "64dvh" }}>
-            <h1>yeetcode</h1>
-            <p>the problem is you have to build this whole site good luck go</p>
+          <div
+            className="problem"
+            style={{ width: "100%", height: "calc(100dvh - 56px)" }}
+          >
+            <Markdown>{problem.markdown}</Markdown>
           </div>
           <div
             style={{
-              width: "100%",
-              height: "36dvh",
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
               borderTop: "1px solid #555",
+              height: "64px",
+              minHeight: "64px",
+              width: "100%",
             }}
-            id="stuff"
           >
-            <div
-              style={{
-                width: "56px",
-                minWidth: "56px",
-                height: "100%",
-                borderRight: "1px solid #555",
-              }}
-            >
-              <Players />
-            </div>
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-              }}
-            ></div>
+            <Players />
           </div>
         </div>
       </Panel>
@@ -394,17 +433,19 @@ function App() {
                 fontSize: 28,
               }}
             />
-            <div className="submitrow">
-              <button className="submit" onClick={onSubmit}>
-                Submit
-              </button>
-              <button className="reset" onClick={onReset}>
-                Reset
-              </button>
-              <button className="sabotage" onClick={onSabotage}>
-                Sabotage
-              </button>
-            </div>
+            {done ? null : (
+              <div className="submitrow">
+                <button className="submit" onClick={onSubmit}>
+                  Submit
+                </button>
+                <button className="reset" onClick={onReset}>
+                  Reset
+                </button>
+                <button className="sabotage" onClick={onSabotage}>
+                  Sabotage
+                </button>
+              </div>
+            )}
             {pending ? (
               <div className="running">
                 <p>Your code is running...</p>

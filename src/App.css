@@ -6,6 +6,10 @@ h5 {
   margin: 0;
 }
 
+.twitch {
+  background-color: #6441a5;
+}
+
 .avatar {
   width: 56px;
   height: 56px;

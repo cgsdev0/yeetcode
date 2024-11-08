@@ -1,5 +1,6 @@
 var express = require("express");
 var bodyParser = require("body-parser");
+var cors = require("cors");
 var cookieParser = require("cookie-parser");
 var cookieSession = require("cookie-session");
 var passport = require("passport");
@@ -16,6 +17,7 @@ let db = {
 };
 
 // Middlewares
+app.use(cors({ origin: "http://localhost:5173", credentials: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(cookieSession({ secret: process.env.VITE_COOKIE_SECRET }));
@@ -79,7 +81,7 @@ app.get("/approve/:id", function (req, res) {
   if (!db.admins.includes(id)) res.end();
   const approved = req.params.id;
   db.players.add(approved);
-  broadcast();
+  broadcast(JSON.stringify(getState()));
 });
 app.get("/admin", function (req, res) {
   const id = req.session?.passport?.user?.id;
@@ -90,7 +92,7 @@ app.get("/admin", function (req, res) {
     "<h1>Approve Players</h1>",
   ];
   Object.values(db.users).forEach((u) => {
-    if (!db.players.includes(u)) {
+    if (!db.players.has(u.id)) {
       html.push(
         `<a target='_blank' href="/approve/${u.id}">Approve ${u.display_name}</a>`,
       );
@@ -118,21 +120,32 @@ const broadcast = (data) => {
 
 app.ws("/ws", function (ws, req) {
   const id = req.session?.passport?.user?.id;
-  if (id && db.users.hasOwnProperty(id)) {
+  if (
+    id &&
+    db.users.hasOwnProperty(id) &&
+    db.players.has(id) &&
+    !db.handles.hasOwnProperty(id)
+  ) {
     db.users[id].connected = true;
     db.handles[id] = ws;
     broadcast(JSON.stringify(getState()));
     ws.on("message", function (msg) {
-      ws.send(msg);
+      if (msg === "done") {
+        if (!db.users[id].done) {
+          db.users[id].done = true;
+          broadcast(JSON.stringify(getState()));
+        }
+      }
     });
   } else {
     ws.close();
   }
   ws.on("close", function () {
     const id = req.session?.passport?.user?.id;
-    if (id && db.users.hasOwnProperty(id)) {
+    if (id && db.users.hasOwnProperty(id) && db.players.has(id)) {
       db.users[id].connected = false;
       delete db.handles[id];
+      broadcast(JSON.stringify(getState()));
     }
   });
 });
@@ -143,7 +156,7 @@ app.get(
   passport.authenticate("twitch", { failureRedirect: "/" }),
   function (req, res) {
     // Successful authentication, redirect home.
-    res.redirect("/");
+    res.redirect("http://localhost:5173/");
     res.end();
   },
 );
