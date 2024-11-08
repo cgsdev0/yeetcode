@@ -6,6 +6,29 @@ h5 {
   margin: 0;
 }
 
+.avatar {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.avatar img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.avatar.disconnected {
+  opacity: 20%;
+}
+
+.avatar.done img {
+  border: 4px solid lime;
+}
+
 .error pre {
   overflow: auto;
   color: #dd7576;

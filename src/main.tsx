@@ -7,6 +7,9 @@ import { WorkerContext } from "./worker_context.ts";
 
 import MyWorker from "./worker?worker";
 
+import { store } from "./store";
+import { Provider } from "react-redux";
+
 const WorkerThing = () => {
   const [worker, setWorker] = useState(new MyWorker());
 
@@ -24,6 +27,8 @@ const WorkerThing = () => {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <WorkerThing />
+    <Provider store={store}>
+      <WorkerThing />
+    </Provider>
   </StrictMode>,
 );

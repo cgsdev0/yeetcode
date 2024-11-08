@@ -9,6 +9,9 @@ import { generate } from "astring";
 import Editor from "@monaco-editor/react";
 import { WorkerContext } from "./worker_context.ts";
 import { Proto, Test, problems } from "./problems.ts";
+import { useAppDispatch, useAppSelector } from "./hooks.ts";
+import { Player, update } from "./serverSlice.ts";
+import { BounceLoader } from "react-spinners";
 
 const getProto = (proto: Proto) => {
   const item = localStorage.getItem(`code-key-${proto.name}`);
@@ -23,6 +26,17 @@ interface Result {
   correct: boolean;
   test: Test;
 }
+
+export const rewriteHostname = () => {
+  if (window.location.hostname === "code.badcop.live") {
+    return "code.badcop.live";
+  }
+  let portString = "";
+  if (window.location.port !== "80") {
+    portString = `:8000`;
+  }
+  return window.location.hostname + portString;
+};
 
 const sabotages = [
   "ohgod",
@@ -56,6 +70,61 @@ function App() {
   const [indent, setIndent] = useState(2);
   const [attackQueue, setAttackQueue] = useState<Sabotage[]>([]);
   const [error, setError] = useState<string | undefined>();
+
+  const dispatch = useAppDispatch();
+
+  const wsRef = useRef<WebSocket | null>(null);
+
+  useEffect(() => {
+    let shouldConnect = true;
+
+    let conjunctionJunction = () => {
+      if (!shouldConnect) {
+        return null;
+      }
+
+      const innerWs = new WebSocket(
+        `${
+          window.location.protocol.endsWith("s:") ? "wss" : "ws"
+        }://${rewriteHostname()}/ws`,
+      );
+
+      innerWs.onopen = () => {
+        console.log("ws open");
+      };
+
+      innerWs.onmessage = (e: any) => {
+        console.log("ws message");
+        try {
+          const data = JSON.parse(e.data);
+          console.warn(data);
+          if (data.type === "world") {
+            dispatch(update(data));
+          }
+        } catch (e) {
+          console.error(e);
+        }
+      };
+
+      innerWs.onclose = () => {
+        console.log(`on close - ${!shouldConnect ? "not " : " "}reconnecting`);
+        setTimeout(() => {
+          if (shouldConnect) {
+            wsRef.current = conjunctionJunction();
+          }
+        }, 1000);
+      };
+
+      return innerWs;
+    };
+
+    wsRef.current = conjunctionJunction();
+
+    return () => {
+      shouldConnect = false;
+      wsRef.current?.close();
+    };
+  }, []);
 
   const cancel = () => {
     restart();
@@ -248,6 +317,25 @@ function App() {
     });
     setPending(true);
   }, [value]);
+
+  const pc = useAppSelector((state) => state.server.players.length);
+  if (!pc)
+    return (
+      <div
+        style={{
+          height: "100dvh",
+          overflow: "hidden",
+          flexDirection: "column",
+          gap: 32,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <h1>Waiting for approval...</h1>
+        <BounceLoader color={"rgb(54, 215, 183)"} />
+      </div>
+    );
   return (
     <PanelGroup autoSaveId="H" direction="horizontal">
       <Panel defaultSize={40}>
@@ -255,26 +343,28 @@ function App() {
           id="left"
           style={{ height: "100dvh", borderRight: "1px solid #555" }}
         >
-          <div className="problem" style={{ width: "100%", height: "70dvh" }}>
+          <div className="problem" style={{ width: "100%", height: "64dvh" }}>
             <h1>yeetcode</h1>
             <p>the problem is you have to build this whole site good luck go</p>
           </div>
           <div
             style={{
               width: "100%",
-              height: "30dvh",
+              height: "36dvh",
               borderTop: "1px solid #555",
             }}
             id="stuff"
           >
             <div
               style={{
-                width: "48px",
-                minWidth: "48px",
+                width: "56px",
+                minWidth: "56px",
                 height: "100%",
                 borderRight: "1px solid #555",
               }}
-            ></div>
+            >
+              <Players />
+            </div>
             <div
               style={{
                 width: "100%",
@@ -375,6 +465,27 @@ const Console = ({ lines }: { lines: string[] }) => {
     </div>
   );
 };
+const Players = () => {
+  const players = useAppSelector((state) => state.server.players);
+  return (
+    <>
+      {players.map((p) => (
+        <PlayerC player={p} key={p.id} />
+      ))}
+    </>
+  );
+};
+
+const PlayerC = ({ player }: { player: Player }) => {
+  return (
+    <div
+      className={`avatar${!player.connected ? " disconnected" : ""}${player.done ? " done" : ""}`}
+    >
+      <img src={player.profile_image_url} />
+    </div>
+  );
+};
+
 const Failure = ({ idx, result }: { idx: number; result: Result }) => {
   return (
     <div className="failure">
