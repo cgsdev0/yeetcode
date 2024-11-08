@@ -96,13 +96,13 @@ app.get("/api/admin", function (req, res) {
   if (!db.admins.includes(id)) res.end();
   let html = [
     "<h1>Start New Round</h1>",
-    "<a href='/advance' target='_blank'>New Round</a>",
+    "<a href='/api/advance' target='_blank'>New Round</a>",
     "<h1>Approve Players</h1>",
   ];
   Object.values(db.users).forEach((u) => {
     if (!db.players.has(u.id)) {
       html.push(
-        `<a target='_blank' href="/approve/${u.id}">Approve ${u.display_name}</a>`,
+        `<a target='_blank' href="/api/approve/${u.id}">Approve ${u.display_name}</a>`,
       );
     }
   });
