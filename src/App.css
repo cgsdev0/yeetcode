@@ -128,10 +128,10 @@ h5 {
   gap: 4px;
 }
 
-/* .flipped { */
-/*   /1* transform: scaleX(-1); *1/ */
-/*   text-transform: capitalize; */
-/* } */
+.flipped {
+  transform: scaleX(-1);
+}
+
 .reset {
   background-color: maroon;
 }

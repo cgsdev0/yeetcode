@@ -54,7 +54,6 @@ const sabotages = [
 type Sabotage = (typeof sabotages)[number];
 
 function randomSabotage(): Sabotage {
-  return "ohgod";
   return sabotages[Math.floor(Math.random() * sabotages.length)];
 }
 
@@ -85,7 +84,7 @@ function App() {
       const data = await window.fetch(
         `${
           window.location.protocol.endsWith("s:") ? "https" : "http"
-        }://${rewriteHostname()}/`,
+        }://${rewriteHostname()}/me`,
         { mode: "cors", credentials: "include" },
       );
       const parsed = await data.json();

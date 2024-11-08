@@ -65,8 +65,13 @@ passport.deserializeUser(function (user, done) {
   done(null, user);
 });
 
-app.get("/", function (req, res) {
-  res.write(JSON.stringify(req.session));
+app.get("/me", function (req, res) {
+  const id = req.session?.passport?.user?.id;
+  if (db.users.hasOwnProperty(id)) {
+    res.write(JSON.stringify(req.session));
+  } else {
+    res.write("{}");
+  }
   res.end();
 });
 
