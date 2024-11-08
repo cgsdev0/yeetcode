@@ -476,14 +476,6 @@ function App() {
                 <button className="reset" onClick={onReset}>
                   Reset
                 </button>
-                <button
-                  className="sabotage"
-                  onClick={() => {
-                    onSabotage(randomSabotage());
-                  }}
-                >
-                  Sabotage
-                </button>
               </div>
             )}
             {pending ? (
