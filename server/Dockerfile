@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Copy server code and install dependencies
 COPY package*.json ./
-RUN npm install
+RUN source .secrets && npm install
 
 # Copy the server source code
 COPY . .
