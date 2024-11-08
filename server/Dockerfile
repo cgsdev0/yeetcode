@@ -14,4 +14,4 @@ COPY . .
 EXPOSE 8000
 
 # Start the Express server
-CMD ["sh", "-c", "source .secrets && node index.js"]
+CMD ["bash", "-c", "source .secrets && node index.js"]
