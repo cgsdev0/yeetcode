@@ -1,12 +1,9 @@
 code.badcop.live {
     # Serve static files from the Vite build
     root * /srv
-    file_server
-
-    route /api/* {
-        reverse_proxy express-server:8000
+    route {
+        reverse_proxy /api/* express-server:8000
+        file_server
+        try_files {path} /index.html
     }
-
-    # Rewrite any unmatched routes to index.html (for single-page app)
-    try_files {path} /index.html
 }
