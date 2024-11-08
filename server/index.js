@@ -162,6 +162,7 @@ app.get("/api/admin", function (req, res) {
 const getState = () => {
   let resp = [];
   db.players.forEach((k) => {
+    if (db.users[k].display_name === "BuddysPizza") return;
     resp.push(db.users[k]);
   });
   resp.sort((a, b) => a.id > b.id);
