@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useContext, useRef, useState } from "react";
 import "./App.css";
+//@ts-ignore
 import { attachComments } from "astravel";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import * as acorn from "acorn";
