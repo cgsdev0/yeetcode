@@ -15,11 +15,18 @@ import { useAppDispatch, useAppSelector } from "./hooks.ts";
 import { Player, update } from "./serverSlice.ts";
 import { BounceLoader } from "react-spinners";
 
+function incrementIntegersInString(str: string) {
+  // Use a regular expression to match integers in the string
+  return str.replace(/\d+/g, (match) => {
+    // Increment the matched integer by 1
+    return `${parseInt(match, 10) + 1}`;
+  });
+}
 const getProto = (proto: Proto) => {
   const item = localStorage.getItem(`code-key-${proto.name}`);
   if (item) return item;
   return `const ${proto.name} = (${proto.args.join(", ")}) => {
-\treturn a + b;
+\treturn ${proto.args[0]};
 }`;
 };
 
@@ -51,6 +58,7 @@ const sabotages = [
   "minify",
   "semicolon",
   "greek",
+  "lightsout",
 ] as const;
 type Sabotage = (typeof sabotages)[number];
 
@@ -59,25 +67,51 @@ function randomSabotage(): Sabotage {
 }
 
 function App() {
-  const problem = problems[0];
+  const pid = useAppSelector((state) => state.server.problem);
+  const problem = problems[pid];
   const [value, setValue] = useState(getProto(problem.proto));
-  const { worker, restart } = useContext(WorkerContext);
+  const { worker, restart, lightsOn, lightsOff } = useContext(WorkerContext);
   const [pending, setPending] = useState(false);
-  const [barebones, setBarebones] = useState(false);
-  const [ohgod, setOhgod] = useState(false);
   const [done, setDone] = useState(false);
   const [results, setResults] = useState<Result[]>([]);
   const [lines, setLines] = useState<string[]>([]);
   const [key, setKey] = useState("0");
-  const [indent, setIndent] = useState(2);
   const [attackQueue, setAttackQueue] = useState<Sabotage[]>([]);
   const [error, setError] = useState<string | undefined>();
+  const [needsAuth, setNeedsAuth] = useState(false);
+
+  const [modifier, setModifier] = useState<Sabotage | null>(null);
+
+  useEffect(() => {
+    if (modifier === "lightsout") {
+      lightsOff();
+    } else {
+      lightsOn();
+    }
+  }, [modifier]);
+
+  const barebones = modifier === "barebones";
+  const ohgod = modifier === "ohgod";
+  const indent = modifier === "bigindent" ? 12 : 2;
+
+  const resetState = () => {
+    setModifier(null);
+    setDone(false);
+    setResults([]);
+    setLines([]);
+    setValue(getProto(problem.proto));
+    setAttackQueue([]);
+    setError(undefined);
+  };
+
+  useEffect(() => {
+    resetState();
+  }, [problem]);
 
   const dispatch = useAppDispatch();
 
   const wsRef = useRef<WebSocket | null>(null);
 
-  const [needsAuth, setNeedsAuth] = useState(false);
   useEffect(() => {
     (async function () {
       let shouldConnect = true;
@@ -115,6 +149,9 @@ function App() {
             console.warn(data);
             if (data.type === "world") {
               dispatch(update(data));
+            }
+            if (data.type === "sabotage") {
+              onSabotage(data.kind);
             }
           } catch (e) {
             console.error(e);
@@ -173,9 +210,6 @@ function App() {
       console.log({ ast });
       const attack = attackQueue[0];
       switch (attack) {
-        case "vars":
-          setValue(generate(ast, { comments: true, indent: "\t" }));
-          break;
         case "minify":
           minify(value, {
             format: { max_line_len: 50, comments: "all" },
@@ -234,8 +268,7 @@ function App() {
     };
   }, [worker]);
 
-  const onSabotage = useCallback(() => {
-    const s = randomSabotage();
+  const onSabotage = useCallback((s: Sabotage) => {
     console.warn("Attack: ", s);
     switch (s) {
       case "semicolon":
@@ -302,21 +335,19 @@ function App() {
       case "outdent":
         setValue((v) => v.replaceAll("\t", ""));
         remount();
-        setIndent(2);
         break;
       case "ohgod":
-        setOhgod(true);
-        break;
       case "barebones":
-        setBarebones(true);
-        break;
       case "bigindent":
-        setIndent(12);
+      case "lightsout":
+        setModifier(s);
         break;
       case "aesthetic":
         setValue((v) => v.replaceAll("\n", "\n\n\n"));
         break;
       case "vars":
+        setValue((v) => incrementIntegersInString(v));
+        break;
       case "minify":
         setAttackQueue((q) => {
           if (q.includes(s)) return q;
@@ -394,7 +425,11 @@ function App() {
         >
           <div
             className="problem"
-            style={{ width: "100%", height: "calc(100dvh - 56px)" }}
+            style={{
+              width: "100%",
+              maxWidth: "30vw",
+              height: "calc(100dvh - 56px)",
+            }}
           >
             <Markdown>{problem.markdown}</Markdown>
           </div>
@@ -441,7 +476,12 @@ function App() {
                 <button className="reset" onClick={onReset}>
                   Reset
                 </button>
-                <button className="sabotage" onClick={onSabotage}>
+                <button
+                  className="sabotage"
+                  onClick={() => {
+                    onSabotage(randomSabotage());
+                  }}
+                >
                   Sabotage
                 </button>
               </div>

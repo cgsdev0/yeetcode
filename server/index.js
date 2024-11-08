@@ -12,8 +12,9 @@ var expressWs = require("express-ws")(app);
 let db = {
   users: {},
   handles: {},
-  admins: ["56931496"],
+  admins: ["56931496", "42089909"],
   players: new Set(),
+  problem: 0,
 };
 
 // Middlewares
@@ -78,25 +79,72 @@ app.get("/api/me", function (req, res) {
   res.end();
 });
 
+const sabotages = [
+  "ohgod",
+  "barebones",
+  "vars",
+  "aesthetic",
+  "swap",
+  "outdent",
+  "bigindent",
+  "minify",
+  "semicolon",
+  "greek",
+  "lightsout",
+];
+
+function randomSabotage() {
+  return sabotages[Math.floor(Math.random() * sabotages.length)];
+}
+
+app.get("/api/sabotage", function (req, res) {
+  const id = req.session?.passport?.user?.id;
+  if (!db.admins.includes(id)) {
+    res.end();
+    return;
+  }
+  broadcast(JSON.stringify({ type: "sabotage", kind: randomSabotage() }));
+  res.end();
+});
+
 app.get("/api/advance", function (req, res) {
   const id = req.session?.passport?.user?.id;
-  if (!db.admins.includes(id)) res.end();
-  // TODO: set new problem
+  if (!db.admins.includes(id)) {
+    res.end();
+    return;
+  }
+  db.problem++;
+
+  db.players.forEach((k) => {
+    db.users[k].done = false;
+  });
+
   broadcast(JSON.stringify(getState()));
+  res.end();
 });
+
 app.get("/api/approve/:id", function (req, res) {
   const id = req.session?.passport?.user?.id;
-  if (!db.admins.includes(id)) res.end();
+  if (!db.admins.includes(id)) {
+    res.end();
+    return;
+  }
   const approved = req.params.id;
   db.players.add(approved);
   broadcast(JSON.stringify(getState()));
+  res.end();
 });
 app.get("/api/admin", function (req, res) {
   const id = req.session?.passport?.user?.id;
-  if (!db.admins.includes(id)) res.end();
+  if (!db.admins.includes(id)) {
+    res.end();
+    return;
+  }
   let html = [
     "<h1>Start New Round</h1>",
     "<a href='/api/advance' target='_blank'>New Round</a>",
+    "<h1>Sabotage</h1>",
+    "<a href='/api/sabotage' target='_blank'>SABOTAGE EVERYTHING</a>",
     "<h1>Approve Players</h1>",
   ];
   Object.values(db.users).forEach((u) => {
@@ -117,7 +165,7 @@ const getState = () => {
     resp.push(db.users[k]);
   });
   resp.sort((a, b) => a.id > b.id);
-  return { players: resp, type: "world" };
+  return { players: resp, type: "world", problem: db.problem };
 };
 
 const broadcast = (data) => {

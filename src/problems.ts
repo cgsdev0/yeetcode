@@ -14,121 +14,99 @@ export interface Problem {
   tests: Test[];
 }
 
-class TreeNode {
-  val: number
-  left: TreeNode | null
-  right: TreeNode | null
-  constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {
-    this.val = (val === undefined ? 0 : val)
-    this.left = (left === undefined ? null : left)
-    this.right = (right === undefined ? null : right)
-  }
-}
 export const problems: Array<Problem> = [
   {
-    markdown: `# add
-literally just add 2 numbers`,
-    proto: {
-      name: "add",
-      args: ["a", "b"],
-    },
-    tests: [
-      { inputs: [1, 2], output: 3 },
-      { inputs: [1, -2], output: -1 },
-    ],
-  },
-  {
-    markdown: `Given an integer x, return true if x is a palindrome, and false otherwise`,
+    markdown: `# Integer Palindrome
+
+Given an integer \`x\`, return \`true\` if \`x\` is a palindrome, and \`false\` otherwise.
+
+An integer is a palindrome when it reads the same forward and backward.
+
+- For example, \`121\` is a palindrome, while \`123\` is not.
+
+## Example 1
+**Input:** x = 121
+
+**Output:** true
+
+## Example 2
+**Input:** x = -121
+
+**Output:** false
+
+**Explanation:** From left to right, it reads \`-121\`. From right to left, it becomes \`121-\`. Therefore, it is not a palindrome.
+
+## Example 3
+**Input:** x = 10
+
+**Output:** false
+
+**Explanation:** Reads \`10\` from left to right and \`01\` from right to left.
+`,
     proto: {
       name: "isPalindrome",
-      args: ["a"],
+      args: ["x"],
     },
     tests: [
       { inputs: [121], output: true },
       { inputs: [-121], output: false },
       { inputs: [0], output: true },
       { inputs: [2221], output: false },
-    ]
+      { inputs: [12], output: false },
+      { inputs: [124421], output: true },
+    ],
   },
   {
-    markdown: `Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
+    markdown: `# Bracket Pairs
+Given a string s containing just the characters '(', ')', '{', '}', '[' and ']', determine if the input string is valid.
 
-    An input string is valid if:
+An input string is valid if:
 
-        Open brackets must be closed by the same type of brackets.
-        Open brackets must be closed in the correct order.
-        Every close bracket has a corresponding open bracket of the same type.
+  - Open brackets must be closed by the same type of brackets.
+  - Open brackets must be closed in the correct order.
+  - Every close bracket has a corresponding open bracket of the same type.
 `,
     proto: {
-      name: 'isValid',
-      args: ["s"]
+      name: "isValid",
+      args: ["s"],
     },
     tests: [
       { inputs: ["()"], output: true },
+      { inputs: ["{}"], output: true },
+      { inputs: ["[]"], output: true },
       { inputs: ["(){}[]"], output: true },
       { inputs: ["(]"], output: false },
+      { inputs: ["()()]"], output: false },
+      { inputs: ["]["], output: false },
+      { inputs: ["{][}"], output: false },
       { inputs: ["(()[]{}{})"], output: true },
-      { inputs: ["{{}}()(()())"], output: true }
-    ]
+      { inputs: ["{{}}()(()())"], output: true },
+    ],
   },
   {
-    markdown: `Given the root of a binary tree, return the inorder traversal of its nodes' values.
+    markdown: `# Stonks
+You are given an array prices where prices[i] is the price of a given stock on the \`ith\` day.
 
-    Example 1:
+You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.
 
-      Input: root = [1,null,2,3]
+Return the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.
 
-      Output: [1,3,2]
+## Example 1:
 
-    Example 2:
+Input: prices = [7,1,5,3,6,4]
 
-      Input: root = [1,2,3,4,5,null,8,null,null,6,7,9]
+Output: 5
 
-      Output: [4,2,6,5,7,1,3,9,8]
-    `,
-    proto: {
-      name: "inorderTraversal",
-      args: ["root"],
-    },
-    tests: [
-      {
-        inputs: [new TreeNode(0, new TreeNode(1), new TreeNode(2))], output: [1, 0, 2]
-      },
-      {
-        inputs: [new TreeNode(0, new TreeNode(1), new TreeNode(2, new TreeNode(3), new TreeNode(4)))], output: [1, 0, 3, 2, 4]
-      }
-    ]
-  },
-  {
-    markdown: `Given the root of a binary tree, check whether it is a mirror of itself (i.e., symmetric around its center).`,
-    proto: {
-      name: "isSymmetric",
-      args: ["root"],
-    },
-    tests: [
-      { inputs: [new TreeNode(0, new TreeNode(1), new TreeNode(2))], output: true },
-      { inputs: [new TreeNode(0, new TreeNode(1), new TreeNode(2, new TreeNode(3), new TreeNode(4)))], output: false },
-    ]
-  },
-  {
-    markdown: `You are given an array prices where prices[i] is the price of a given stock on the ith day.
+Explanation: Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5.
+Note that buying on day 2 and selling on day 1 is not allowed because you must buy before you sell.
 
-    You want to maximize your profit by choosing a single day to buy one stock and choosing a different day in the future to sell that stock.
+## Example 2:
 
-    Return the maximum profit you can achieve from this transaction. If you cannot achieve any profit, return 0.
+Input: prices = [7,6,4,3,1]
 
-    Example 1:
+Output: 0
 
-    Input: prices = [7,1,5,3,6,4]
-    Output: 5
-    Explanation: Buy on day 2 (price = 1) and sell on day 5 (price = 6), profit = 6-1 = 5.
-    Note that buying on day 2 and selling on day 1 is not allowed because you must buy before you sell.
-
-    Example 2:
-
-    Input: prices = [7,6,4,3,1]
-    Output: 0
-    Explanation: In this case, no transactions are done and the max profit = 0.
+Explanation: In this case, no transactions are done and the max profit = 0.
 `,
     proto: {
       name: "maxProfit",
@@ -141,6 +119,151 @@ literally just add 2 numbers`,
       { inputs: [100, 0], output: 0 },
       { inputs: [333, 334], output: 1 },
       { inputs: [1, 0, 10, 1, 30, 20, 0, 20, 15, 2, 100], output: 100 },
-    ]
-  }
+    ],
+  },
+  {
+    markdown: `# FizzBuzz
+Given an integer n, return a string array answer (1-indexed) where:
+
+- answer[i] == "FizzBuzz" if i is divisible by 3 and 5.
+- answer[i] == "Fizz" if i is divisible by 3.
+- answer[i] == "Buzz" if i is divisible by 5.
+- answer[i] == i (as a string) if none of the above conditions are true.
+
+## Example 1:
+Input: n = 5
+
+Output: ["1", "2", "Fizz", "4", "Buzz"]
+
+## Example 2:
+Input: n = 15
+
+Output: ["1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8", "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"]
+`,
+    proto: {
+      name: "fizzBuzz",
+      args: ["n"],
+    },
+    tests: [
+      { inputs: [3], output: ["1", "2", "Fizz"] },
+      { inputs: [5], output: ["1", "2", "Fizz", "4", "Buzz"] },
+      {
+        inputs: [10],
+        output: [
+          "1",
+          "2",
+          "Fizz",
+          "4",
+          "Buzz",
+          "Fizz",
+          "7",
+          "8",
+          "Fizz",
+          "Buzz",
+        ],
+      },
+      {
+        inputs: [15],
+        output: [
+          "1",
+          "2",
+          "Fizz",
+          "4",
+          "Buzz",
+          "Fizz",
+          "7",
+          "8",
+          "Fizz",
+          "Buzz",
+          "11",
+          "Fizz",
+          "13",
+          "14",
+          "FizzBuzz",
+        ],
+      },
+      { inputs: [1], output: ["1"] },
+      { inputs: [0], output: [] },
+    ],
+  },
+  {
+    markdown: `# Count Vowels
+Given a string s, return the number of vowels (a, e, i, o, u) in the string. Assume the string only contains lowercase English letters.
+
+## Example 1:
+Input: s = "hello"
+
+Output: 2
+
+## Example 2:
+Input: s = "world"
+
+Output: 1
+`,
+    proto: {
+      name: "countVowels",
+      args: ["s"],
+    },
+    tests: [
+      { inputs: ["hello"], output: 2 },
+      { inputs: ["world"], output: 1 },
+      { inputs: ["aeiou"], output: 5 },
+      { inputs: ["bcdfg"], output: 0 },
+    ],
+  },
+  {
+    markdown: `# Two Sum
+Given an array of integers nums and an integer target, return the indices of the two numbers such that they add up to the target.
+
+- Each input has exactly one solution, and you may not use the same element twice.
+
+## Example 1:
+Input: nums = [2, 7, 11, 15], target = 9
+
+Output: [0, 1]
+
+Explanation: nums[0] + nums[1] == 9, so we return [0, 1].
+
+## Example 2:
+Input: nums = [3, 2, 4], target = 6
+
+Output: [1, 2]
+`,
+    proto: {
+      name: "twoSum",
+      args: ["nums", "target"],
+    },
+    tests: [
+      { inputs: [[2, 7, 11, 15], 9], output: [0, 1] },
+      { inputs: [[3, 2, 4], 6], output: [1, 2] },
+      { inputs: [[3, 3], 6], output: [0, 1] },
+      { inputs: [[1, 2, 3, 4, 5], 9], output: [3, 4] },
+    ],
+  },
+  {
+    markdown: `# Maximum in Array
+Given an array of numbers nums, return the largest number in the array.
+
+## Example 1:
+Input: nums = [3, 1, 4, 1, 5, 9, 2, 6, 5]
+
+Output: 9
+
+## Example 2:
+Input: nums = [-10, -3, -1, -4]
+
+Output: -1
+`,
+    proto: {
+      name: "findMax",
+      args: ["nums"],
+    },
+    tests: [
+      { inputs: [[1, 3, 2]], output: 3 },
+      { inputs: [[-10, -3, -1, -4]], output: -1 },
+      { inputs: [[3, 1, 4, 1, 5, 9, 2, 6, 5]], output: 9 },
+      { inputs: [[100]], output: 100 },
+      { inputs: [[5, 5, 5]], output: 5 },
+    ],
+  },
 ];

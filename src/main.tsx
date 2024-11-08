@@ -10,6 +10,23 @@ import MyWorker from "./worker?worker";
 import { store } from "./store";
 import { Provider } from "react-redux";
 
+//@ts-ignore
+function update(e) {
+  var x = e.clientX || e.touches[0].clientX;
+  var y = e.clientY || e.touches[0].clientY;
+
+  document.documentElement.style.setProperty("--cursorX", x + "px");
+  document.documentElement.style.setProperty("--cursorY", y + "px");
+}
+
+const lightsOff = () =>
+  document.documentElement.style.setProperty("--show", "block");
+const lightsOn = () =>
+  document.documentElement.style.setProperty("--show", "none");
+lightsOn();
+document.addEventListener("mousemove", update);
+document.addEventListener("touchmove", update);
+
 const WorkerThing = () => {
   const [worker, setWorker] = useState(new MyWorker());
 
@@ -19,7 +36,7 @@ const WorkerThing = () => {
   };
 
   return (
-    <WorkerContext.Provider value={{ worker, restart }}>
+    <WorkerContext.Provider value={{ worker, restart, lightsOn, lightsOff }}>
       <App />
     </WorkerContext.Provider>
   );
