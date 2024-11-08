@@ -424,14 +424,23 @@ function App() {
           style={{ height: "100dvh", borderRight: "1px solid #555" }}
         >
           <div
-            className="problem"
             style={{
               width: "100%",
-              maxWidth: "30vw",
               height: "calc(100dvh - 56px)",
+              overflowY: "auto",
             }}
           >
-            <Markdown>{problem.markdown}</Markdown>
+            <div
+              className="problem"
+              style={{
+                width: "100%",
+                maxWidth: "30vw",
+                height: "100%",
+                boxSizing: "border-box",
+              }}
+            >
+              <Markdown>{problem.markdown}</Markdown>
+            </div>
           </div>
           <div
             style={{
