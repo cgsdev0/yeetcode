@@ -85,7 +85,7 @@ function App() {
       const data = await window.fetch(
         `${
           window.location.protocol.endsWith("s:") ? "https" : "http"
-        }://${rewriteHostname()}/me`,
+        }://${rewriteHostname()}/api/me`,
         { mode: "cors", credentials: "include" },
       );
       const parsed = await data.json();
@@ -101,7 +101,7 @@ function App() {
         const innerWs = new WebSocket(
           `${
             window.location.protocol.endsWith("s:") ? "wss" : "ws"
-          }://${rewriteHostname()}/ws`,
+          }://${rewriteHostname()}/api/ws`,
         );
 
         innerWs.onopen = () => {
@@ -336,7 +336,7 @@ function App() {
   const signin = () => {
     window.location.href = `${
       window.location.protocol.endsWith("s:") ? "https" : "http"
-    }://${rewriteHostname()}/auth/twitch`;
+    }://${rewriteHostname()}/api/auth/twitch`;
   };
   const onSubmit = useCallback(() => {
     worker.postMessage({

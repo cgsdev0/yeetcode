@@ -44,7 +44,10 @@ passport.use(
     {
       clientID: process.env.VITE_TWITCH_CLIENT_ID,
       clientSecret: process.env.VITE_TWITCH_CLIENT_SECRET,
-      callbackURL: "http://localhost:8000/callback",
+      callbackURL:
+        process.env.NODE_ENV === "production"
+          ? "https://code.badcop.live/api/callback"
+          : "http://localhost:8000/api/callback",
       scope: "user_read",
     },
     function (accessToken, refreshToken, profile, done) {
@@ -65,7 +68,7 @@ passport.deserializeUser(function (user, done) {
   done(null, user);
 });
 
-app.get("/me", function (req, res) {
+app.get("/api/me", function (req, res) {
   const id = req.session?.passport?.user?.id;
   if (db.users.hasOwnProperty(id)) {
     res.write(JSON.stringify(req.session));
@@ -75,20 +78,20 @@ app.get("/me", function (req, res) {
   res.end();
 });
 
-app.get("/advance", function (req, res) {
+app.get("/api/advance", function (req, res) {
   const id = req.session?.passport?.user?.id;
   if (!db.admins.includes(id)) res.end();
   // TODO: set new problem
   broadcast(JSON.stringify(getState()));
 });
-app.get("/approve/:id", function (req, res) {
+app.get("/api/approve/:id", function (req, res) {
   const id = req.session?.passport?.user?.id;
   if (!db.admins.includes(id)) res.end();
   const approved = req.params.id;
   db.players.add(approved);
   broadcast(JSON.stringify(getState()));
 });
-app.get("/admin", function (req, res) {
+app.get("/api/admin", function (req, res) {
   const id = req.session?.passport?.user?.id;
   if (!db.admins.includes(id)) res.end();
   let html = [
@@ -123,7 +126,7 @@ const broadcast = (data) => {
   });
 };
 
-app.ws("/ws", function (ws, req) {
+app.ws("/api/ws", function (ws, req) {
   const id = req.session?.passport?.user?.id;
   if (
     id &&
@@ -155,13 +158,17 @@ app.ws("/ws", function (ws, req) {
   });
 });
 
-app.get("/auth/twitch", passport.authenticate("twitch"));
+app.get("/api/auth/twitch", passport.authenticate("twitch"));
 app.get(
-  "/callback",
+  "/api/callback",
   passport.authenticate("twitch", { failureRedirect: "/" }),
   function (req, res) {
     // Successful authentication, redirect home.
-    res.redirect("http://localhost:5173/");
+    if (process.env.NODE_ENV === "production") {
+      res.redirect("https://code.badcop.live/");
+    } else {
+      res.redirect("http://localhost:5173/");
+    }
     res.end();
   },
 );

@@ -3,11 +3,9 @@ code.badcop.live {
     root * /srv
     file_server
 
-    # Proxy API requests to the Express server
-    @notRoot {
-        not path /
+    route /api/* {
+        reverse_proxy express-server:8000
     }
-    reverse_proxy @notRoot express-server:8000
 
     # Rewrite any unmatched routes to index.html (for single-page app)
     try_files {path} /index.html
