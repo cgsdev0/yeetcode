@@ -344,9 +344,11 @@ function App() {
         break;
       case "aesthetic":
         setValue((v) => v.replaceAll("\n", "\n\n\n"));
+        remount();
         break;
       case "vars":
         setValue((v) => incrementIntegersInString(v));
+        remount();
         break;
       case "minify":
         setAttackQueue((q) => {
